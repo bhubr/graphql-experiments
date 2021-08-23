@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GraphQL experiments</title>
+  <style>
+    pre {
+      background: #eee;
+      padding: 1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>GraphQL experiments</h1>
+  <p>Here's the data received from the server:</p>
+  <pre id="data"></pre>
+  <script>
+    const endpoint = 'http://localhost:4000/graphql';
+    fetch(endpoint, {
+      method: 'POST',
+      body: JSON.stringify({ query: '{ hello }' }),
+      headers: {
+        'content-type': 'application/json'
+      }
+    })
+      .then(response => response.json())
+      .then(result => {
+        document.querySelector('#data').innerHTML = JSON.stringify(result)
+      })
+  </script>
+</body>
+</html>

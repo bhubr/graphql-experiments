@@ -13,6 +13,7 @@ const root = {
 };
 
 const app = express();
+app.use(express.static('public'));
 
 app.use('/graphql', graphqlHTTP({
   schema,
