@@ -1,3 +1,5 @@
+const express = require('express');
+const { graphqlHTTP } = require('express-graphql');
 const { graphql, buildSchema } = require('graphql');
 
 const schema = buildSchema(`
@@ -10,6 +12,15 @@ const root = {
   hello: () => 'Hello World!'
 };
 
-graphql(schema, '{ hello }', root).then(response => {
-  console.log(response);
-})
+const app = express();
+
+app.use('/graphql', graphqlHTTP({
+  schema,
+  rootValue: root,
+  graphiql: true
+}));
+
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+  console.log(`GraphQL server running on port ${port}`);
+});
