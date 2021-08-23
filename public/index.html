@@ -14,13 +14,21 @@
 </head>
 <body>
   <h1>GraphQL experiments</h1>
+  <nav>
+    <a href="/graphql">GraphiQL playground</a>
+  </nav>
   <p>Here's the data received from the server:</p>
   <pre id="data"></pre>
   <script>
     const endpoint = 'http://localhost:4000/graphql';
     fetch(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ query: '{ hello }' }),
+      body: JSON.stringify({ query: `{
+  quoteOfTheDay
+  random
+  rollThreeDice
+}
+` }),
       headers: {
         'content-type': 'application/json'
       }

@@ -4,12 +4,16 @@ const { graphql, buildSchema } = require('graphql');
 
 const schema = buildSchema(`
   type Query {
-    hello: String
+    quoteOfTheDay: String
+    random: Float
+    rollThreeDice: [Int]
   }
 `);
 
 const root = {
-  hello: () => 'Hello World!'
+  quoteOfTheDay: () => Math.random() < 0.5 ? 'Take it easy' : 'Salvation lies within',
+  random: () => Math.random(),
+  rollThreeDice: () => new Array(3).fill(0).map(_ => 1 + Math.floor(Math.random() * 6))
 };
 
 const app = express();
