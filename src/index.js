@@ -9,7 +9,12 @@ const schema = buildSchema(`
     roll(numRolls: Int!): [Int]
   }
 
+  type Mutation {
+    setMessage(message: String): String
+  }
+
   type Query {
+    getMessage: String
     getDie(numSides: Int): RandomDie
   }
 `);
@@ -32,8 +37,17 @@ class RandomDie {
   }
 }
 
+const fakeDb = {
+  message: 'N/A'
+};
+
 const root = {
   getDie: ({ numSides }) => new RandomDie(numSides || 6),
+  setMessage: ({ message }) => {
+    fakeDb.message = message;
+    return message;
+  },
+  getMessage: () => fakeDb.message,
 };
 
 const app = express();
