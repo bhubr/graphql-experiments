@@ -13,7 +13,7 @@ const schema = buildSchema(`
 const root = {
   quoteOfTheDay: () => Math.random() < 0.5 ? 'Take it easy' : 'Salvation lies within',
   random: () => Math.random(),
-  rollDice: ({ numDice, numSides }) => console.log(({ numDice, numSides }) )||new Array(numDice || 0).fill(0).map(_ => 1 + Math.floor(Math.random() * (numSides || 6)))
+  rollDice: ({ numDice, numSides }) => new Array(numDice || 0).fill(0).map(_ => 1 + Math.floor(Math.random() * (numSides || 6)))
 };
 
 const app = express();
