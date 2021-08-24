@@ -5,6 +5,13 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GraphQL experiments</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/themes/prism-twilight.min.css"
+      integrity="sha512-akb4nfKzpmhujLUyollw5waBPeohuVf0Z5+cL+4Ngc4Db+V8szzx6ZTujguFjpmD076W8LImVIbOblmQ+vZMKA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
     <style>
       pre {
         background: #eee;
@@ -16,28 +23,76 @@
         display: block;
         margin-bottom: 0.5em;
       }
+      textarea {
+        width: 60%;
+        border: 1px solid #ccc;
+      }
+      .panels {
+        display: flex;
+        justify-content: space-between;
+      }
+      .panels > div {
+        width: 48%;
+      }
+      #messages-list {
+        padding: 0;
+      }
+      .message-item {
+        padding: 0.25em 0.5em;
+        border-bottom: #f4f4f4;
+        list-style-type: none;
+      }
+      .message-item:nth-child(2n+1) {
+        background: #f8f8f8;
+      }
     </style>
   </head>
   <body>
     <h1>GraphQL experiments</h1>
+
     <nav>
       <a href="/graphql">GraphiQL playground</a>
     </nav>
-    <p>Here's the data received from the server:</p>
-    <pre id="data"></pre>
-    <h2>New message</h2>
-    <form id="new-message">
-      <label for="messageContent">Content</label>
-      <textarea id="messageContent" rows="6" name="content" value=""></textarea>
-      <label for="messageAuthor">Author</label>
-      <select id="messageAuthor">
-        <option value="Georges">Georges</option>
-        <option value="Ringo">Ringo</option>
-        <option value="John">John</option>
-        <option value="Paul">Paul</option>
-      </select>
-      <button type="submit">Send</button>
-    </form>
+    <div class="panels">
+      <div>
+        <h1>Server response</h1>
+        <p>Here's the data received from the server:</p>
+        <pre><code class="language-json" id="data"></code></pre>
+      </div>
+      <div>
+        <h2>Messages</h2>
+
+        <ul id="messages-list"></ul>
+
+        <h3>New message</h3>
+        <form id="new-message">
+          <input type="hidden" id="messageId" name="id" value="" />
+          <label for="messageContent">Content</label>
+          <textarea
+            id="messageContent"
+            rows="6"
+            name="content"
+            value=""
+          ></textarea>
+          <label for="messageAuthor">Author</label>
+          <select id="messageAuthor">
+            <option value="">&mdash;</option>
+            <option value="Georges">Georges</option>
+            <option value="Ringo">Ringo</option>
+            <option value="John">John</option>
+            <option value="Paul">Paul</option>
+          </select>
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
+
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"
+      integrity="sha512-axJX7DJduStuBB8ePC8ryGzacZPr3rdLaIDZitiEgWWk2gsXxEFlm4UW0iNzj2h3wp5mOylgHAzBzM4nRSvTZA=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
     <script>
       /**
        * Query helper
@@ -71,6 +126,7 @@
           `query RollDice($dice: Int!, $sides: Int) {
           getAllMessages {
             id
+            author
             content
           }
           getDie(numSides: $sides) {
@@ -84,32 +140,98 @@
           }
         );
 
-      const createMessage = input => fetchGraphQL(`
+      const createMessage = (input) =>
+        fetchGraphQL(
+          `
           mutation CreateMessage($input: MessageInput) {
             createMessage(input: $input) {
               id
             }
           }
-      `, { input })
+      `,
+          { input }
+        );
+
+      const updateMessage = (id, input) =>
+        fetchGraphQL(
+          `
+          mutation UpdateMessage($id: ID!, $input: MessageInput) {
+            updateMessage(id: $id, input: $input) {
+              id
+            }
+          }
+      `,
+          { id, input }
+        );
 
       const onSubmitMessage = async (e) => {
         e.preventDefault();
+        const messageIdInput = document.querySelector('#messageId');
         const contentArea = document.querySelector('#messageContent');
         const authorSelect = document.querySelector('#messageAuthor');
         const payload = {
           content: contentArea.value,
           author: authorSelect.value,
+        };
+        if (!payload.author) {
+          alert('Select an author');
+          return;
         }
-        const result = await createMessage(payload);
+        let result;
+        if (!messageIdInput.value) {
+          result = await createMessage(payload);
+        } else {
+          const id = messageIdInput.value;
+          messageIdInput.value = '';
+          result = await updateMessage(id, payload);
+        }
         contentArea.value = '';
+        authorSelect.value = '';
         console.log(result);
+      };
+
+      const renderMessages = (messages) =>
+        messages
+          .map((msg) => `<li class="message-item" data-id="${msg.id}">(${msg.author}) ${msg.content}</li>`)
+          .join('');
+
+      const createMessageItem = ({ id, author, content }) => {
+        const el = document.createElement('LI');
+        el.dataset.id = id;
+        el.textContent = `(${msg.author}) ${msg.content}`;
+        return el;
       }
 
       (async () => {
         const result = await queryBaseData();
-        document.querySelector('#data').innerHTML = JSON.stringify(result, null, 2);
+        document.querySelector('#data').textContent = JSON.stringify(
+          result,
+          null,
+          2
+        );
+        Prism.highlightAll();
 
-        document.querySelector('#new-message').addEventListener('submit', onSubmitMessage);
+        const { getAllMessages: messages } = result.data;
+
+        document.querySelector('#messages-list').innerHTML =
+          renderMessages(messages);
+
+        const messageItems = document.querySelectorAll('.message-item');
+        for (let messageItem of messageItems) {
+          messageItem.addEventListener('click', (e) => {
+            const li = e.target;
+            const id = li.dataset.id;
+            const re = /\(([A-Za-z ]+)\) (.*)/;
+            const [, author, content] = li.textContent.match(re);
+            document.querySelector('#messageId').value = id;
+            document.querySelector('#messageAuthor').value = author;
+            document.querySelector('#messageContent').value = content;
+          });
+        }
+
+        document
+          .querySelector('#new-message')
+          .addEventListener('submit', onSubmitMessage);
       })();
     </script>
   </body>

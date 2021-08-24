@@ -89,6 +89,13 @@ const root = {
   },
 };
 
+root.createMessage({
+  input: {
+    author: 'Georges',
+    content: 'Here Comes The Sun'
+  }
+})
+
 const app = express();
 app.use(express.static('public'));
 
