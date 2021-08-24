@@ -1,47 +1,116 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GraphQL experiments</title>
-  <style>
-    pre {
-      background: #eee;
-      padding: 1em;
-    }
-  </style>
-</head>
-<body>
-  <h1>GraphQL experiments</h1>
-  <nav>
-    <a href="/graphql">GraphiQL playground</a>
-  </nav>
-  <p>Here's the data received from the server:</p>
-  <pre id="data"></pre>
-  <script>
-    const endpoint = 'http://localhost:4000/graphql';
-    fetch(endpoint, {
-      method: 'POST',
-      body: JSON.stringify({ query: `query RollDice($dice: Int!, $sides: Int) {
-  getDie(numSides: $sides) {
-    roll(numRolls: $dice)
-  }
-}
-        `,
-        variables: {
-          dice: 5,
-          sides: 12,
-        }
-      }),
-      headers: {
-        'content-type': 'application/json'
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GraphQL experiments</title>
+    <style>
+      pre {
+        background: #eee;
+        padding: 1em;
       }
-    })
-      .then(response => response.json())
-      .then(result => {
-        document.querySelector('#data').innerHTML = JSON.stringify(result)
-      })
-  </script>
-</body>
+      label,
+      input,
+      textarea {
+        display: block;
+        margin-bottom: 0.5em;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>GraphQL experiments</h1>
+    <nav>
+      <a href="/graphql">GraphiQL playground</a>
+    </nav>
+    <p>Here's the data received from the server:</p>
+    <pre id="data"></pre>
+    <h2>New message</h2>
+    <form id="new-message">
+      <label for="messageContent">Content</label>
+      <textarea id="messageContent" rows="6" name="content" value=""></textarea>
+      <label for="messageAuthor">Author</label>
+      <select id="messageAuthor">
+        <option value="Georges">Georges</option>
+        <option value="Ringo">Ringo</option>
+        <option value="John">John</option>
+        <option value="Paul">Paul</option>
+      </select>
+      <button type="submit">Send</button>
+    </form>
+    <script>
+      /**
+       * Query helper
+       */
+      const fetchGraphQL = (query, variables) => {
+        // Build payload with query and optional variables
+        const payload = { query };
+        if (variables) {
+          payload.variables = variables;
+        }
+
+        // Send request
+        const endpoint = 'http://localhost:4000/graphql';
+        return fetch(endpoint, {
+          method: 'POST',
+          body: JSON.stringify({
+            query,
+            variables,
+          }),
+          headers: {
+            'content-type': 'application/json',
+          },
+        }).then((response) => response.json());
+      };
+
+      /**
+       * Query helper
+       */
+      const queryBaseData = () =>
+        fetchGraphQL(
+          `query RollDice($dice: Int!, $sides: Int) {
+          getAllMessages {
+            id
+            content
+          }
+          getDie(numSides: $sides) {
+            roll(numRolls: $dice)
+          }
+        }
+          `,
+          {
+            dice: 5,
+            sides: 12,
+          }
+        );
+
+      const createMessage = input => fetchGraphQL(`
+          mutation CreateMessage($input: MessageInput) {
+            createMessage(input: $input) {
+              id
+            }
+          }
+      `, { input })
+
+      const onSubmitMessage = async (e) => {
+        e.preventDefault();
+        const contentArea = document.querySelector('#messageContent');
+        const authorSelect = document.querySelector('#messageAuthor');
+        const payload = {
+          content: contentArea.value,
+          author: authorSelect.value,
+        }
+        const result = await createMessage(payload);
+        contentArea.value = '';
+        console.log(result);
+      }
+
+      (async () => {
+        const result = await queryBaseData();
+        document.querySelector('#data').innerHTML = JSON.stringify(result, null, 2);
+
+        document.querySelector('#new-message').addEventListener('submit', onSubmitMessage);
+      })();
+    </script>
+  </body>
 </html>
