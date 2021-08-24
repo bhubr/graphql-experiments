@@ -23,12 +23,15 @@
     const endpoint = 'http://localhost:4000/graphql';
     fetch(endpoint, {
       method: 'POST',
-      body: JSON.stringify({ query: `{
-  quoteOfTheDay
-  random
-  rollThreeDice
+      body: JSON.stringify({ query: `query RollDice($dice: Int!, $sides: Int) {
+  rollDice(numDice: $dice, numSides: $sides)
 }
-` }),
+        `,
+        variables: {
+          dice: 5,
+          sides: 12,
+        }
+      }),
       headers: {
         'content-type': 'application/json'
       }

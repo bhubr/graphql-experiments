@@ -6,14 +6,14 @@ const schema = buildSchema(`
   type Query {
     quoteOfTheDay: String
     random: Float
-    rollThreeDice: [Int]
+    rollDice(numDice: Int!, numSides: Int): [Int]
   }
 `);
 
 const root = {
   quoteOfTheDay: () => Math.random() < 0.5 ? 'Take it easy' : 'Salvation lies within',
   random: () => Math.random(),
-  rollThreeDice: () => new Array(3).fill(0).map(_ => 1 + Math.floor(Math.random() * 6))
+  rollDice: ({ numDice, numSides }) => console.log(({ numDice, numSides }) )||new Array(numDice || 0).fill(0).map(_ => 1 + Math.floor(Math.random() * (numSides || 6)))
 };
 
 const app = express();
