@@ -24,7 +24,9 @@
     fetch(endpoint, {
       method: 'POST',
       body: JSON.stringify({ query: `query RollDice($dice: Int!, $sides: Int) {
-  rollDice(numDice: $dice, numSides: $sides)
+  getDie(numSides: $sides) {
+    roll(numRolls: $dice)
+  }
 }
         `,
         variables: {
