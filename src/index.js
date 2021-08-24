@@ -3,17 +3,37 @@ const { graphqlHTTP } = require('express-graphql');
 const { graphql, buildSchema } = require('graphql');
 
 const schema = buildSchema(`
+  type RandomDie {
+    numSides: Int!
+    rollOnce: Int!
+    roll(numRolls: Int!): [Int]
+  }
+
   type Query {
-    quoteOfTheDay: String
-    random: Float
-    rollDice(numDice: Int!, numSides: Int): [Int]
+    getDie(numSides: Int): RandomDie
   }
 `);
 
+class RandomDie {
+  constructor(numSides) {
+    this.numSides = numSides;
+  }
+
+  rollOnce() {
+    return 1 + Math.floor(Math.random() * this.numSides);
+  }
+
+  roll({ numRolls }) {
+    const out = [];
+    for (let i = 0; i < numRolls; i += 1) {
+      out.push(this.rollOnce());
+    }
+    return out;
+  }
+}
+
 const root = {
-  quoteOfTheDay: () => Math.random() < 0.5 ? 'Take it easy' : 'Salvation lies within',
-  random: () => Math.random(),
-  rollDice: ({ numDice, numSides }) => new Array(numDice || 0).fill(0).map(_ => 1 + Math.floor(Math.random() * (numSides || 6)))
+  getDie: ({ numSides }) => new RandomDie(numSides || 6),
 };
 
 const app = express();
