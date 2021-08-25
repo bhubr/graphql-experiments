@@ -42,7 +42,7 @@
         border-bottom: #f4f4f4;
         list-style-type: none;
       }
-      .message-item:nth-child(2n+1) {
+      .message-item:nth-child(2n + 1) {
         background: #f8f8f8;
       }
     </style>
@@ -180,10 +180,19 @@
         let result;
         if (!messageIdInput.value) {
           result = await createMessage(payload);
+          const newMessageItem = createMessageItem({
+            id: result.data.createMessage.id,
+            ...payload,
+          });
+          document.querySelector('#messages-list').appendChild(newMessageItem);
+          newMessageItem.addEventListener('click', onClickMessageItem);
         } else {
           const id = messageIdInput.value;
           messageIdInput.value = '';
           result = await updateMessage(id, payload);
+          document.querySelector(
+            `[data-id="${id}"]`
+          ).textContent = `(${payload.author}) ${payload.content}`;
         }
         contentArea.value = '';
         authorSelect.value = '';
@@ -192,15 +201,29 @@
 
       const renderMessages = (messages) =>
         messages
-          .map((msg) => `<li class="message-item" data-id="${msg.id}">(${msg.author}) ${msg.content}</li>`)
+          .map(
+            (msg) =>
+              `<li class="message-item" data-id="${msg.id}">(${msg.author}) ${msg.content}</li>`
+          )
           .join('');
 
       const createMessageItem = ({ id, author, content }) => {
         const el = document.createElement('LI');
         el.dataset.id = id;
-        el.textContent = `(${msg.author}) ${msg.content}`;
+        el.className = 'message-item';
+        el.textContent = `(${author}) ${content}`;
         return el;
-      }
+      };
+
+      const onClickMessageItem = (e) => {
+        const li = e.target;
+        const id = li.dataset.id;
+        const re = /\(([A-Za-z ]+)\) (.*)/;
+        const [, author, content] = li.textContent.match(re);
+        document.querySelector('#messageId').value = id;
+        document.querySelector('#messageAuthor').value = author;
+        document.querySelector('#messageContent').value = content;
+      };
 
       (async () => {
         const result = await queryBaseData();
@@ -218,15 +241,7 @@
 
         const messageItems = document.querySelectorAll('.message-item');
         for (let messageItem of messageItems) {
-          messageItem.addEventListener('click', (e) => {
-            const li = e.target;
-            const id = li.dataset.id;
-            const re = /\(([A-Za-z ]+)\) (.*)/;
-            const [, author, content] = li.textContent.match(re);
-            document.querySelector('#messageId').value = id;
-            document.querySelector('#messageAuthor').value = author;
-            document.querySelector('#messageContent').value = content;
-          });
+          messageItem.addEventListener('click', onClickMessageItem);
         }
 
         document
