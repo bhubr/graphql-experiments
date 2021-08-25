@@ -1,7 +1,7 @@
 const express = require('express');
 const crypto = require('crypto');
 const { graphqlHTTP } = require('express-graphql');
-const { graphql, buildSchema } = require('graphql');
+const { buildSchema } = require('graphql');
 
 const schema = buildSchema(`
   type RandomDie {
